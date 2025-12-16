@@ -11,7 +11,7 @@ public class ProjectionTests
         Expression<Func<TestEntity, object>> mapping = e => new { e.Name, e.Id, e.SubEntities, Alias = e.Name };
         var tracker = new ProjectionTracker();
         var accessedProperties = tracker.GetProjectedProperties(mapping);
-        var propertyNames = accessedProperties.Select(e => e.Name).ToHashSet();
+        var propertyNames = accessedProperties.Select(e => e.Property.Name).ToHashSet();
         
         HashSet<string> expectedResult = [ nameof(TestEntity.Name), nameof(TestEntity.Id), nameof(TestEntity.SubEntities) ];
         Assert.That(propertyNames.SetEquals(expectedResult));
@@ -23,7 +23,7 @@ public class ProjectionTests
         Expression<Func<TestEntity, object>> mapping = e => new MethodTestEntity { Method = e.TestMethod, Invocation = e.TestMethod() };
         var tracker = new ProjectionTracker();
         var accessedProperties = tracker.GetProjectedProperties(mapping);
-        var propertyNames = accessedProperties.Select(e => e.Name).ToHashSet();
+        var propertyNames = accessedProperties.Select(e => e.Property.Name).ToHashSet();
         
         Assert.That(propertyNames, Is.Empty);
     }
@@ -34,10 +34,14 @@ public class ProjectionTests
         Expression<Func<TestEntity, object>> mapping = e => new { e.SingleSubEntity.Id };
         var tracker = new ProjectionTracker();
         var accessedProperties = tracker.GetProjectedProperties(mapping);
-        var propertyNames = accessedProperties.Select(e => e.Name).ToHashSet();
+        var dependency = accessedProperties.Single();
+        var subProperty = dependency.Dependencies!.Single();
         
-        HashSet<string> expectedResult = [ nameof(TestEntity.SingleSubEntity.Id) ];
-        Assert.That(propertyNames.SetEquals(expectedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(dependency.Property.Name, Is.EqualTo(nameof(TestEntity.SingleSubEntity)));
+            Assert.That(subProperty.Property.Name, Is.EqualTo(nameof(TestEntity.SingleSubEntity.Id)));
+        });
     }
     
     [Test]
@@ -47,7 +51,7 @@ public class ProjectionTests
         Expression<Func<TestEntity, object>> mapping = e => new { e.Name, x.Test };
         var tracker = new ProjectionTracker();
         var accessedProperties = tracker.GetProjectedProperties(mapping);
-        var propertyNames = accessedProperties.Select(e => e.Name).ToHashSet();
+        var propertyNames = accessedProperties.Select(e => e.Property.Name).ToHashSet();
         
         HashSet<string> expectedResult = [ nameof(TestEntity.Name) ];
         Assert.That(propertyNames.SetEquals(expectedResult));
@@ -57,9 +61,60 @@ public class ProjectionTests
     public void Projection_Build_DirectMembers()
     {
         var t = typeof(TestEntity);
-        PropertyInfo[] props = [t.GetProperty(nameof(TestEntity.Id))!, t.GetProperty(nameof(TestEntity.SubEntities))!];
+        HashSet<PropertyDependency> props = [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.Id))!,
+                Dependencies = [],
+            },
+            new ()
+            {
+            Property = t.GetProperty(nameof(TestEntity.SubEntities))!,
+            Dependencies = [],
+            }
+        ];
 
-        ProjectionBuilder.MakeProjection<TestEntity>(props);
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {Id = Param_0.Id, SubEntities = Param_0.SubEntities}")
+            );
+    }
+
+    [Test]
+    public void Projection_Build_SubEntities()
+    {
+        var t = typeof(TestEntity);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props = [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.Id))!,
+                Dependencies = [],
+            },
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.SingleSubEntity))!,
+                Dependencies = [
+                    new ()
+                    {
+                        Property = t2.GetProperty(nameof(TestEntity.SingleSubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new ()
+                    {
+                        Property = t2.GetProperty(nameof(TestEntity.SingleSubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    }
+                ],
+            }
+        ];
+
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {Id = Param_0.Id, SingleSubEntity = new SubEntity() {Id = Param_0.SingleSubEntity.Id, KeyEntityId = Param_0.SingleSubEntity.KeyEntityId}}")
+        );
     }
     
     private class TestEntity

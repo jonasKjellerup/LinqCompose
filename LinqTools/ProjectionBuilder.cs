@@ -6,9 +6,19 @@ namespace LinqTools;
 
 public static class ProjectionBuilder
 {
+    public static IQueryable<T> ApplyProjectionMapping<T, TMapping>(this IQueryable<T> queryable, Expression<Func<T, TMapping>> mapping)
+    {
+        // TODO memoize
+        var tracker = new ProjectionTracker();
+        var props = tracker.GetProjectedProperties(mapping);
+        var projection = MakeProjection<T>(props);
+
+        return queryable.Select(projection);
+    }
+    
     /// <summary>
     /// Creates a lambda expression that projects the selected properties on the type itself.
-    /// E.g. consider a type T with properties A, B, and C, making a projection of properties A and B
+    /// E.g.: consider a type T with properties A, B, and C, making a projection of properties A and B
     /// will result in the following expression:
     /// <code>
     /// p => new T { A = p.A, B = p.B }
@@ -20,33 +30,36 @@ public static class ProjectionBuilder
     /// <param name="properties">The properties to include in the projection.</param>
     /// <typeparam name="T">The target entity of your IQueryable. Must be default constructible.</typeparam>
     /// <returns>A lambda expression that projects the specified fields.</returns>
-    public static Expression<Func<T, T>> MakeProjection<T>(IEnumerable<PropertyInfo> properties)
+    public static Expression<Func<T, T>> MakeProjection<T>(HashSet<PropertyDependency> properties)
     {
-        var type = typeof(T);
-        // TODO handle navigational properties.
-        var props = properties.DistinctBy(p => p.Name).ToHashSet();
-        Debug.Assert(props.All(p => p.ReflectedType == type), 
-            $"All of the specified properties must exist on {type.Name}");
-        
         var param = Expression.Parameter(typeof(T));
-        var bindings = props.Select(p =>
-        {
-            var access = Expression.MakeMemberAccess(param, p);
-            return Expression.Bind(p, access);
-        });
-        var initExpression = Expression.MemberInit(Expression.New(typeof(T)), bindings);
+        var initExpression = MakeObjectInitializer(typeof(T), param, properties);
         
         return Expression.Lambda<Func<T, T>>(initExpression, param);
     }
 
-    public static IQueryable<T> ApplyProjectionMapping<T, TMapping>(this IQueryable<T> queryable, Expression<Func<T, TMapping>> mapping)
-    where T : new()
+    private static MemberInitExpression MakeObjectInitializer(
+        Type type, 
+        Expression memberSource,
+        HashSet<PropertyDependency> properties)
     {
-        // TODO memoize
-        var tracker = new ProjectionTracker();
-        var props = tracker.GetProjectedProperties(mapping);
-        var projection = MakeProjection<T>(props);
+        Debug.Assert(properties.All(p => p.Property.ReflectedType == type), 
+            $"All of the specified properties must exist on {type.Name}");
+        var bindings = properties.Select(p =>
+        {
+            var access = Expression.MakeMemberAccess(memberSource, p.Property);
+            Debug.Assert(p.Dependencies is not null);
+            if (p.Dependencies.Count > 0)
+            {
+                return Expression.Bind(p.Property, MakeObjectInitializer(
+                    p.Property.PropertyType,
+                    access,
+                    p.Dependencies
+                ));
+            }
+            return Expression.Bind(p.Property, access);
+        });
 
-        return queryable.Select(projection);
+        return Expression.MemberInit(Expression.New(type), bindings);
     }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace LinqTools;
 
@@ -11,10 +12,10 @@ namespace LinqTools;
  */
 internal class ProjectionTracker : ExpressionVisitor
 {
-    private HashSet<PropertyInfo> _properties = [];
+    private HashSet<PropertyDependency> _properties = [];
     private ParameterExpression? _entityParameter = null;
 
-    public HashSet<PropertyInfo> GetProjectedProperties(LambdaExpression expression)
+    public HashSet<PropertyDependency> GetProjectedProperties(LambdaExpression expression)
     {
         Debug.Assert(expression.Parameters.Count == 1);
         _properties = [];
@@ -26,39 +27,53 @@ internal class ProjectionTracker : ExpressionVisitor
 
     protected override Expression VisitMember(MemberExpression node)
     {
-        var root = FindMemberExpressionRoot(node.Expression);
-        if (root != _entityParameter)
-        {
-            return base.VisitMember(node);
-        }
-        
-        if (node.Member is PropertyInfo propertyInfo)
-        {
-            _properties.Add(propertyInfo);
-        }
-        
-        return node;
+        var dependencies = FindDependencies(node);
+        return dependencies is null ? base.VisitMember(node) : node;
     }
 
-    private Expression? FindMemberExpressionRoot(Expression? node)
+    private PropertyDependency? FindDependencies(Expression? node)
     {
-        while (node is not null)
+        if (node is not MemberExpression member)
         {
-            if (node == _entityParameter)
-            {
-                return node;
-            }
-        
-            if (node is MemberExpression { Expression: not null } member)
-            {
-                node = member.Expression;
-            }
-            else
-            {
-                node = null;
-            }
+            return null;
         }
 
-        return null;
+        // All members must be properties to be considered
+        if (member.Member is not PropertyInfo propertyInfo)
+        {
+            return null;
+        }
+        
+        var d = new PropertyDependency
+        {
+            Property = propertyInfo,
+            Dependencies = null,
+        };
+
+        HashSet<PropertyDependency> knownDependencies;
+        if (member.Expression == _entityParameter)
+        {
+            knownDependencies = _properties;
+        }
+        else
+        {
+            var result = FindDependencies(member.Expression);
+            if (result is null)
+            {
+                return null;
+            }
+
+            Debug.Assert(result.Value.Dependencies is not null);
+            knownDependencies = result.Value.Dependencies;
+        }
+
+        if (knownDependencies.TryGetValue(d, out var existing))
+        {
+            return existing;
+        }
+        
+        d.Dependencies = [];
+        knownDependencies.Add(d);
+        return d;
     }
 }
