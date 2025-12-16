@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools", "LinqTools\LinqTools.csproj", "{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools.Tests", "LinqTools.Tests\LinqTools.Tests.csproj", "{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
