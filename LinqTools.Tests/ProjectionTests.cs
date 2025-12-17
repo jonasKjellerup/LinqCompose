@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace LinqTools.Tests;
 
@@ -138,7 +137,7 @@ public class ProjectionTests
             Is.EqualTo("Param_0 => new TestEntity() {Id = Param_0.Id, SingleSubEntity = new SubEntity() {Id = Param_0.SingleSubEntity.Id, KeyEntityId = Param_0.SingleSubEntity.KeyEntityId}}")
         );
     }
-    
+
     private class TestEntity
     {
         public required int Id { get; set; }
