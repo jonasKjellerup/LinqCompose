@@ -24,7 +24,7 @@ public struct PropertyDependency : IEquatable<PropertyDependency>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Property, Dependencies);
+        return Property.GetHashCode();
     }
 
     public bool Equals(PropertyDependency other)

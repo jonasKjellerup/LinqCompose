@@ -58,6 +58,28 @@ public class ProjectionTests
     }
 
     [Test]
+    public void Projection_OverlappingTree()
+    {
+        Expression<Func<TestEntity, object>> mapping = e => new
+        {
+            A = new { e.SingleSubEntity.Id, e.SingleSubEntity.KeyEntityId },
+            B = new { e.SingleSubEntity.Id, e.SingleSubEntity.TertiaryData },
+        };
+        
+        var tracker = new ProjectionTracker();
+        var accessedProperties = tracker.GetProjectedProperties(mapping);
+        var root = accessedProperties.Single();
+        var propertyNames = root.Dependencies!.Select(e => e.Property.Name).ToHashSet();
+        
+        HashSet<string> expectedResult = [ nameof(SubEntity.Id), nameof(SubEntity.KeyEntityId), nameof(SubEntity.TertiaryData) ];
+        Assert.Multiple(() =>
+        {
+            Assert.That(propertyNames.SetEquals(expectedResult));
+            Assert.That(root.Property.Name, Is.EqualTo(nameof(TestEntity.SingleSubEntity)));
+        });
+    }
+
+    [Test]
     public void Projection_Build_DirectMembers()
     {
         var t = typeof(TestEntity);
@@ -135,6 +157,7 @@ public class ProjectionTests
     {
         public required int Id { get; set; }
         public required int KeyEntityId { get; set; }
+        public string TertiaryData { get; set; }
     }
 
     // Method group cannot be assigned in an anonymous object initializer, so we need a class.
