@@ -138,6 +138,43 @@ public class ProjectionTests
         );
     }
 
+    [Test]
+    public void Projection_Build_Collection_List()
+    {
+        var t = typeof(TestEntity);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props =
+        [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.SubEntities))!,
+                Dependencies = [
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.TertiaryData))!,
+                        Dependencies = [],
+                    }
+                ],
+            },
+        ];
+        
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {SubEntities = Param_0.SubEntities.Select(Param_1 => new SubEntity() {Id = Param_1.Id, KeyEntityId = Param_1.KeyEntityId, TertiaryData = Param_1.TertiaryData}).ToList()}")
+        );
+    }
+
     private class TestEntity
     {
         public required int Id { get; set; }

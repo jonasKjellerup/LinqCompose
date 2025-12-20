@@ -8,10 +8,18 @@ namespace LinqTools;
 public static class ProjectionBuilder
 {
     private static readonly Type EnumerableType = typeof(Enumerable);
-    private static readonly MethodInfo SelectMethod = EnumerableType.GetMethod(nameof(Enumerable.Select), BindingFlags.Public | BindingFlags.Static)!;
+    private static readonly MethodInfo SelectMethod;
     private static readonly MethodInfo ToArrayMethod = EnumerableType.GetMethod(nameof(Enumerable.ToArray), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly MethodInfo ToListMethod = EnumerableType.GetMethod(nameof(Enumerable.ToList), BindingFlags.Public | BindingFlags.Static)!;
-    private static readonly MethodInfo ToHashSetMethod = EnumerableType.GetMethod(nameof(Enumerable.ToHashSet), BindingFlags.Public | BindingFlags.Static)!;
+    private static readonly MethodInfo ToHashSetMethod;
+
+    static ProjectionBuilder()
+    {
+        Func<IEnumerable<object>, Func<object, object>, IEnumerable<object>> select = Enumerable.Select;
+        SelectMethod = select.Method.GetGenericMethodDefinition();
+        Func<IEnumerable<object>, HashSet<object>> toHashSet = Enumerable.ToHashSet;
+        ToHashSetMethod = toHashSet.Method.GetGenericMethodDefinition();
+    }
     
     public static IQueryable<T> ApplyProjectionMapping<T, TMapping>(this IQueryable<T> queryable, Expression<Func<T, TMapping>> mapping)
     {
@@ -72,18 +80,17 @@ public static class ProjectionBuilder
         Expression memberSource,
         PropertyDependency property)
     {
-        Debug.Assert(property.Property.ReflectedType == memberSource.Type);
+        Debug.Assert(property.Property.PropertyType == memberSource.Type);
         Debug.Assert(property.Dependencies is { Count: > 0 });
-        var member = Expression.Property(memberSource, property.Property);
         
-        var elementType = GetEnumerableElementType(member.Type);
+        var elementType = GetEnumerableElementType(memberSource.Type);
         var lambdaParam = Expression.Parameter(elementType);
         var initializer = MakeObjectInitializer(elementType, lambdaParam, property.Dependencies);
         var lambda = Expression.Lambda(initializer, lambdaParam);
 
         var genericSelect = SelectMethod.MakeGenericMethod(elementType, elementType);
-        var collectionType = GetCollectionType(member.Type);
-        return MakeCollectEnumerableExpression(Expression.Call(genericSelect, member, lambda), collectionType);
+        var collectionType = GetCollectionType(memberSource.Type);
+        return MakeCollectEnumerableExpression(Expression.Call(genericSelect, memberSource, lambda), elementType, collectionType);
     }
 
     private static SupportedCollectionType GetCollectionType(Type type)
@@ -128,16 +135,25 @@ public static class ProjectionBuilder
         return type.GetGenericArguments()[0];
     }
 
-    private static MethodCallExpression MakeCollectEnumerableExpression(MethodCallExpression source, SupportedCollectionType type)
+    private static MethodCallExpression MakeCollectEnumerableExpression(MethodCallExpression source, Type elementType, SupportedCollectionType type)
     {
-        return type switch
+        var method = type switch
         {
-            SupportedCollectionType.Array => Expression.Call(ToArrayMethod, source),
-            SupportedCollectionType.AbstractEnumerable => source,
-            SupportedCollectionType.List => Expression.Call(ToListMethod, source),
-            SupportedCollectionType.HashSet => Expression.Call(ToHashSetMethod, source),
+            SupportedCollectionType.AbstractEnumerable => null,
+            SupportedCollectionType.Array => ToArrayMethod,
+            SupportedCollectionType.List => ToListMethod,
+            SupportedCollectionType.HashSet => ToHashSetMethod,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
+
+        if (method is null)
+        {
+            return source;
+        }
+
+        method = method.MakeGenericMethod(elementType);
+        
+        return Expression.Call(method, source);
     }
     
     private enum SupportedCollectionType
