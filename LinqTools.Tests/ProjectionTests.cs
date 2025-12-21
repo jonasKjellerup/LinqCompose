@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 
 namespace LinqTools.Tests;
 
@@ -174,14 +176,127 @@ public class ProjectionTests
             Is.EqualTo("Param_0 => new TestEntity() {SubEntities = Param_0.SubEntities.Select(Param_1 => new SubEntity() {Id = Param_1.Id, KeyEntityId = Param_1.KeyEntityId, TertiaryData = Param_1.TertiaryData}).ToList()}")
         );
     }
+    
+    [Test]
+    public void Projection_Build_Collection_Array()
+    {
+        var t = typeof(TestEntity);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props =
+        [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.SubEntitiesArray))!,
+                Dependencies = [
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.TertiaryData))!,
+                        Dependencies = [],
+                    }
+                ],
+            },
+        ];
+        
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {SubEntitiesArray = Param_0.SubEntitiesArray.Select(Param_1 => new SubEntity() {Id = Param_1.Id, KeyEntityId = Param_1.KeyEntityId, TertiaryData = Param_1.TertiaryData}).ToArray()}")
+        );
+    }
+    
+    [Test]
+    public void Projection_Build_Collection_HashSet()
+    {
+        var t = typeof(TestEntity);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props =
+        [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.SubEntitiesHash))!,
+                Dependencies = [
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.TertiaryData))!,
+                        Dependencies = [],
+                    }
+                ],
+            },
+        ];
+        
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {SubEntitiesHash = Param_0.SubEntitiesHash.Select(Param_1 => new SubEntity() {Id = Param_1.Id, KeyEntityId = Param_1.KeyEntityId, TertiaryData = Param_1.TertiaryData}).ToHashSet()}")
+        );
+    }
 
+    [Test]
+    public void Projection_Build_Collection_Enumerable()
+    {
+        var t = typeof(TestEntity);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props =
+        [
+            new ()
+            {
+                Property = t.GetProperty(nameof(TestEntity.SubEntitiesEnumerable))!,
+                Dependencies = [
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.TertiaryData))!,
+                        Dependencies = [],
+                    }
+                ],
+            },
+        ];
+        
+        var projectionExpression = ProjectionBuilder.MakeProjection<TestEntity>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo("Param_0 => new TestEntity() {SubEntitiesEnumerable = Param_0.SubEntitiesEnumerable.Select(Param_1 => new SubEntity() {Id = Param_1.Id, KeyEntityId = Param_1.KeyEntityId, TertiaryData = Param_1.TertiaryData})}")
+        );
+    }
+    
     private class TestEntity
     {
         public required int Id { get; set; }
         public required string Name { get; set; }
         public required List<SubEntity> SubEntities { get; set; }
+        public required HashSet<SubEntity> SubEntitiesHash { get; set; }
+        public required IEnumerable<SubEntity> SubEntitiesEnumerable { get; set; }
+        public required SubEntity[] SubEntitiesArray { get; set; }
         public required SubEntity SingleSubEntity { get; set; }
-        public SubEntity? NullableSubEntity { get; set; }
 
         public int TestMethod()
         {
@@ -193,7 +308,7 @@ public class ProjectionTests
     {
         public required int Id { get; set; }
         public required int KeyEntityId { get; set; }
-        public string TertiaryData { get; set; }
+        public string TertiaryData { get; set; } = null!;
     }
 
     // Method group cannot be assigned in an anonymous object initializer, so we need a class.
