@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 
 namespace LinqTools;
@@ -16,7 +18,32 @@ public struct PropertyDependency : IEquatable<PropertyDependency>
 {
     public required PropertyInfo Property;
     public HashSet<PropertyDependency>? Dependencies;
-
+    
+    /// <returns>
+    /// A new dependency tree representing the union of two trees.
+    /// Note of caution, dependency sets may be reused on non-overlapping dependencies.
+    /// </returns>
+    [Pure]
+    public PropertyDependency Union(PropertyDependency other)
+    {
+        Debug.Assert(Property == other.Property);
+        Debug.Assert(Dependencies != null && other.Dependencies != null);
+        var newDependencies = other.Dependencies.Except(Dependencies).ToHashSet();
+        foreach (var dependency in Dependencies)
+        {
+            if (other.Dependencies.TryGetValue(dependency, out var otherDependency) is false)
+            {
+                // There is no overlap, node can be added as is.
+                newDependencies.Add(dependency);
+                continue;
+            }
+            
+            newDependencies.Add(dependency.Union(otherDependency));
+        }
+        
+        return this with { Dependencies = newDependencies };
+    }
+    
     public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is PropertyDependency other && Equals(other);

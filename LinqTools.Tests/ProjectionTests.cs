@@ -81,6 +81,30 @@ public class ProjectionTests
     }
 
     [Test]
+    public void Projection_IEnumerable()
+    {
+        Expression<Func<TestEntity, object>> mapping = e => new
+        {
+            A = e.SubEntities
+                .Where(a => a.Id > 2)
+                .Select(a => new { a.Id, a.KeyEntityId })
+                .ToList(),
+            B = e.SubEntities.Any(x => x.Id == 3)
+        };
+        
+        var tracker = new ProjectionTracker();
+        var accessedProperties = tracker.GetProjectedProperties(mapping);
+        var root = accessedProperties.Single();
+
+        HashSet<string> expectedSubDependencies = [ nameof(SubEntity.Id), nameof(SubEntity.KeyEntityId) ];
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.Property.Name, Is.EqualTo(nameof(TestEntity.SubEntities)));
+            Assert.That(expectedSubDependencies.SetEquals(root.Dependencies!.Select(p => p.Property.Name)));
+        });
+    }
+
+    [Test]
     public void Projection_Build_DirectMembers()
     {
         var t = typeof(TestEntity);
