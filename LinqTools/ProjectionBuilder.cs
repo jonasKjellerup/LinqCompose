@@ -21,16 +21,6 @@ public static class ProjectionBuilder
         ToHashSetMethod = toHashSet.Method.GetGenericMethodDefinition();
     }
     
-    public static IQueryable<T> ApplyProjectionMapping<T, TMapping>(this IQueryable<T> queryable, Expression<Func<T, TMapping>> mapping)
-    {
-        // TODO memoize
-        var tracker = new ProjectionTracker();
-        var props = tracker.GetProjectedProperties(mapping);
-        var projection = MakeProjection<T>(props);
-
-        return queryable.Select(projection);
-    }
-    
     /// <summary>
     /// Creates a lambda expression that projects the selected properties on the type itself.
     /// E.g.: consider a type T with properties A, B, and C, making a projection of properties A and B

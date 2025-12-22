@@ -15,6 +15,11 @@ internal class ProjectionTracker : ExpressionVisitor
     private HashSet<PropertyDependency> _properties = [];
     private ParameterExpression? _entityParameter = null;
 
+    public static HashSet<PropertyDependency> FindPropertyDependencies(LambdaExpression expression)
+    {
+        return new ProjectionTracker().GetProjectedProperties(expression);
+    }
+    
     public HashSet<PropertyDependency> GetProjectedProperties(LambdaExpression expression)
     {
         Debug.Assert(expression.Parameters.Count == 1);

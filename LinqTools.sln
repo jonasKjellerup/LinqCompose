@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools", "LinqTools\Linq
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools.Tests", "LinqTools.Tests\LinqTools.Tests.csproj", "{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools.Tests.EFCore", "LinqTools.Tests.EFCore\LinqTools.Tests.EFCore.csproj", "{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
