@@ -88,7 +88,7 @@ internal class ProjectionTracker : ExpressionVisitor
 
         var dependencyUnion = dependencies.Value.Union(aliasedDependencies);
         
-        // super ugly hack to update the existing dependency node without knowing where in the tree it is located.
+        // TODO Do this in a less ridiculous manner.
         Debug.Assert(dependencyUnion.Dependencies != null);
         var set = dependencies.Value.Dependencies;
         set!.Clear();

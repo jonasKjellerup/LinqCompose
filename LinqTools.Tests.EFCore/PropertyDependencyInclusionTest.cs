@@ -46,7 +46,7 @@ public class Tests
     }
 
     [Test]
-    public void Test1()
+    public void IncludeDependenciesOf_Simple()
     {
         Expression<Func<PropertyDependencyTestModelA, object>> mapping = a => new { a.Id, Bs = a.Bs.Select(b => b.Value) };
         var a = _context.PropertyDependencyTestModelA
@@ -60,8 +60,39 @@ public class Tests
             Assert.That(a, Has.Count.EqualTo(20));
             Assert.That(bs, Has.Count.EqualTo(20 * 10));
             Assert.That(a.All(x => x.Control is false && x.Id != Guid.Empty));
-            Assert.That(bs.All(x => x.Control is false && x.Value > 0));
+            Assert.That(bs.All(x => x is { Control: false, Value: > 0 }));
         });
+    }
+
+    [Test]
+    public void IncludeDependenciesOf_Simple_Multiple()
+    {
+        Expression<Func<PropertyDependencyTestModelA, object>> mapping = a => new { Bs = a.Bs.Select(b => b.Value) };
+        var a = _context.PropertyDependencyTestModelA
+            .AsQueryable()
+            .IncludeDependenciesOf(mapping, a => a.Id)
+            .ToList();
+        var bs = a.SelectMany(x => x.Bs).ToList();
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(a, Has.Count.EqualTo(20));
+            Assert.That(bs, Has.Count.EqualTo(20 * 10));
+            Assert.That(a.All(x => x.Control is false && x.Id != Guid.Empty));
+            Assert.That(bs.All(x => x is { Control: false, Value: > 0 }));
+        });
+    }
+    
+    [Test]
+    public void Test2()
+    {
+        Expression<Func<int, bool>> r = x => x > 10;
+        _ = _context.PropertyDependencyTestModelB
+            .Where(ExpressionContext.With(r)
+                .SubstituteIn<PropertyDependencyTestModelB, bool>(r => b => r(b.Value)))
+            .First();
+        
+        Assert.Pass();
     }
 
     [TearDown]
