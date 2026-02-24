@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Reflection;
 
 namespace LinqTools;
@@ -26,6 +27,7 @@ public class DependencySetBuilder
         return this;
     }
     
+    [Pure]
     public HashSet<PropertyDependency> Result()
     {
         var set = new HashSet<PropertyDependency>(_dependencies);
