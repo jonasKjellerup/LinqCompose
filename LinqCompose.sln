@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools", "LinqTools\LinqTools.csproj", "{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqCompose", "LinqCompose\LinqCompose.csproj", "{DF26D5FA-2C6F-41E4-80AB-BFE66E55DA71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools.Tests", "LinqTools.Tests\LinqTools.Tests.csproj", "{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqCompose.Tests", "LinqCompose.Tests\LinqCompose.Tests.csproj", "{D79FD5C1-6957-4A51-9662-AFAF2506ECF2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqTools.Tests.EFCore", "LinqTools.Tests.EFCore\LinqTools.Tests.EFCore.csproj", "{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqCompose.Tests.EFCore", "LinqCompose.Tests.EFCore\LinqCompose.Tests.EFCore.csproj", "{0FE935B5-6A8C-447E-BD74-B046BE7FA8C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
