@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LinqCompose;
 using Microsoft.EntityFrameworkCore;
 
 namespace LinqTools.Tests.EFCore;

@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using LinqCompose;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 

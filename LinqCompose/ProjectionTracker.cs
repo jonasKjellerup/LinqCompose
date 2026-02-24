@@ -1,10 +1,8 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 /**
  * Tracks which entity properties should be included in a projection,

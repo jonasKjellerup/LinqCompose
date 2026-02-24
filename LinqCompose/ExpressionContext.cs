@@ -1,7 +1,7 @@
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 public static class ExpressionContext
 {
@@ -23,24 +23,21 @@ public class ExpressionContext<T>(Expression<T> contextExpression)
 
 public static class QueryableExtensions
 {
-    extension<T>(IQueryable<T> query)
+    [Pure]
+    public static IQueryable<T> SWhere<T, TE>(this IQueryable<T> query, Expression<TE> expression,
+        Expression<Func<TE, Func<T, bool>>> predicate
+    )
     {
-        [Pure]
-        public IQueryable<T> SWhere<TE>(Expression<TE> expression,
-            Expression<Func<TE, Func<T, bool>>> predicate
-        )
-        {
-            var reducer = new ReductionVisitor(predicate.Parameters[0], expression);
-            return query.Where((Expression<Func<T, bool>>)((UnaryExpression)reducer.Visit(expression.Body)).Operand);
-        }
+        var reducer = new ReductionVisitor(predicate.Parameters[0], expression);
+        return query.Where((Expression<Func<T, bool>>)((UnaryExpression)reducer.Visit(expression.Body)).Operand);
+    }
 
-        [Pure]
-        public IQueryable<TR> SSelect<TR, TE>(Expression<TE> expression,
-            Expression<Func<TE, Func<T, TR>>> selector
-        )
-        {
-            var reducer = new ReductionVisitor(selector.Parameters[0], expression);
-            return query.Select((Expression<Func<T, TR>>)((UnaryExpression)reducer.Visit(expression.Body)).Operand);
-        }
+    [Pure]
+    public static IQueryable<TR> SSelect<T, TR, TE>(this IQueryable<T> query, Expression<TE> expression,
+        Expression<Func<TE, Func<T, TR>>> selector
+    )
+    {
+        var reducer = new ReductionVisitor(selector.Parameters[0], expression);
+        return query.Select((Expression<Func<T, TR>>)((UnaryExpression)reducer.Visit(expression.Body)).Operand);
     }
 }

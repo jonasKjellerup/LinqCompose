@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 /// <summary>
 /// Represents a tree of property dependencies.

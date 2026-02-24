@@ -1,7 +1,7 @@
 using System.Diagnostics.Contracts;
 using System.Reflection;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 public class DependencySetBuilder
 {

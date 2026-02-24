@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 public static class QueryExtension
 {

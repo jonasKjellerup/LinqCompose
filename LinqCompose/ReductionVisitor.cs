@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 
-namespace LinqTools;
+namespace LinqCompose;
 
 /*
  * Given target: x and replacement: (a, b) => a + b
