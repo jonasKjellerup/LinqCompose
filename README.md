@@ -1,10 +1,18 @@
 # LinqCompose
 
+[![latest version](https://img.shields.io/nuget/v/LinqCompose)](https://www.nuget.org/packages/LinqCompose)
+
 LinqCompose is a library that aims to simplify abstracting and composing LINQ operations,
 
 Features:
  - Generating expressions for selecting only required properties, based on a mapping expression.
  - Substituting expression placeholders in an expression.
+
+## Installation
+
+```sh
+dotnet add package LinqCompose
+```
 
 # Examples
 
