@@ -35,7 +35,6 @@ public class DependencySetBuilder(bool validatePath = false)
             if (validatePath && targetType is not null)
             {
                 ValidateDependency(targetType, property);
-                targetType = property.PropertyType;
             }
             
             Debug.Assert(deps is not null);
@@ -45,18 +44,23 @@ public class DependencySetBuilder(bool validatePath = false)
             }
             else
             {
-                deps.Add(new PropertyDependency { Property = property, Dependencies = [] });
+                var prop = new PropertyDependency { Property = property, Dependencies = [] };
+                deps.Add(prop);
+                deps = prop.Dependencies;
             }
+            
+            targetType = property.PropertyType;
+
         }
         
         return this;
     }
 
-    private static void ValidateDependency(Type target, PropertyInfo dependency)
+    private static void ValidateDependency(Type target, PropertyInfo property)
     {
-        if (dependency.DeclaringType?.IsAssignableFrom(target) is not true)
+        if (property.DeclaringType?.IsAssignableFrom(target) is not true)
         {
-            throw new InvalidOperationException($"");
+            throw new InvalidOperationException($"Property {property.Name} must exist on type {target.Name}");
         }
     }
     

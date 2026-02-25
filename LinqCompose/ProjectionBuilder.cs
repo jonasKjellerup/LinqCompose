@@ -48,7 +48,7 @@ public static class ProjectionBuilder
         Expression memberSource,
         HashSet<PropertyDependency> properties)
     {
-        Debug.Assert(properties.All(p => p.Property.ReflectedType == type), 
+        Debug.Assert(properties.All(p => p.Property.DeclaringType!.IsAssignableFrom(type)), 
             $"All of the specified properties must exist on {type.Name}");
         var bindings = properties.Select(p =>
         {
