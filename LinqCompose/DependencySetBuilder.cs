@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace LinqCompose;
@@ -53,6 +54,26 @@ public class DependencySetBuilder(bool validatePath = false)
 
         }
         
+        return this;
+    }
+
+    public DependencySetBuilder AddFromExpression<T, TR>(Expression<Func<T, TR>> expr)
+    {
+        var tracker = new ProjectionTracker();
+        var deps = tracker.GetProjectedProperties(expr);
+        foreach (var dependency in deps)
+        {
+            if (_dependencies.TryGetValue(dependency, out var existing))
+            {
+                _dependencies.Remove(dependency);
+                _dependencies.Add(existing.Union(dependency));
+            }
+            else
+            {
+                _dependencies.Add(dependency);
+            }
+        }
+
         return this;
     }
 
