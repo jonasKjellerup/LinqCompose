@@ -314,6 +314,47 @@ public class ProjectionTests
         );
     }
     
+    [Test]
+    public void Projection_Build_NullableAccess()
+    {
+        var t = typeof(EntityWithNullables);
+        var t2 = typeof(SubEntity);
+        HashSet<PropertyDependency> props =
+        [
+            new ()
+            {
+                Property = t.GetProperty(nameof(EntityWithNullables.SubEntity))!,
+                Dependencies = [
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.Id))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.KeyEntityId))!,
+                        Dependencies = [],
+                    },
+                    new PropertyDependency
+                    {
+                        Property = t2.GetProperty(nameof(SubEntity.TertiaryData))!,
+                        Dependencies = [],
+                    }
+                ],
+            },
+            new ()
+            {
+                Property = t.GetProperty(nameof(EntityWithNullables.Id))!,
+                Dependencies = [],
+            },
+        ];
+        var projectionExpression = ProjectionBuilder.MakeProjection<EntityWithNullables>(props);
+        Assert.That(
+            projectionExpression.ToString(), 
+            Is.EqualTo(  "Param_0 => new EntityWithNullables() {SubEntity = IIF((Param_0.SubEntity == null), null, new SubEntity() {Id = Param_0.SubEntity.Id, KeyEntityId = Param_0.SubEntity.KeyEntityId, TertiaryData = Param_0.SubEntity.TertiaryData}), Id = Param_0.Id}")
+        );
+    }
+    
     private class TestEntity
     {
         public required int Id { get; set; }
@@ -335,6 +376,12 @@ public class ProjectionTests
         public required int Id { get; set; }
         public required int KeyEntityId { get; set; }
         public string TertiaryData { get; set; } = null!;
+    }
+
+    private class EntityWithNullables
+    {
+        public required int? Id { get; set; }
+        public SubEntity? SubEntity { get; set; }
     }
 
     // Method group cannot be assigned in an anonymous object initializer, so we need a class.
