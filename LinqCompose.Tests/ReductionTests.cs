@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LinqCompose;
+using LinqCompose.Visitors;
 
 namespace LinqTools.Tests;
 

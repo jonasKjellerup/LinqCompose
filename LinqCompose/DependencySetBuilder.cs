@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
+using LinqCompose.Visitors;
 
 namespace LinqCompose;
 

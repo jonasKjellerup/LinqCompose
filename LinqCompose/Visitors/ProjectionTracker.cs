@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace LinqCompose;
+namespace LinqCompose.Visitors;
 
 /**
  * Tracks which entity properties should be included in a projection,

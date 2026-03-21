@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using LinqCompose.Visitors;
 
 namespace LinqCompose;
 

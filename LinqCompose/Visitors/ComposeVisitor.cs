@@ -2,9 +2,9 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace LinqCompose;
+namespace LinqCompose.Visitors;
 
-public class ComposeVisitor : ExpressionVisitor
+internal class ComposeVisitor : ExpressionVisitor
 {
     private static readonly MethodInfo InlineExprInfo =
         GetGenericMethod<Func<Expression, object>>(Composer.Inline<object>);
