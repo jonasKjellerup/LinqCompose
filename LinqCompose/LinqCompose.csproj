@@ -8,6 +8,9 @@
         <Authors>jonaskjellerup</Authors>
         <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
         <PackageProjectUrl>https://github.com/jonasKjellerup/LinqCompose</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageLicenseUrl>https://github.com/jonasKjellerup/LinqCompose/blob/main/LICENSE.md</PackageLicenseUrl>
     </PropertyGroup>
     
     <ItemGroup>
