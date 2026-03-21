@@ -8,24 +8,12 @@ namespace LinqCompose;
 public static class ProjectionBuilder
 {
     private static readonly NullabilityInfoContext NullabilityInfoContext = new();
-    private static readonly Type EnumerableType = typeof(Enumerable);
-    private static readonly MethodInfo SelectMethod;
-
-    private static readonly MethodInfo ToArrayMethod =
-        EnumerableType.GetMethod(nameof(Enumerable.ToArray), BindingFlags.Public | BindingFlags.Static)!;
-
-    private static readonly MethodInfo ToListMethod =
-        EnumerableType.GetMethod(nameof(Enumerable.ToList), BindingFlags.Public | BindingFlags.Static)!;
-
-    private static readonly MethodInfo ToHashSetMethod;
-
-    static ProjectionBuilder()
-    {
-        Func<IEnumerable<object>, Func<object, object>, IEnumerable<object>> select = Enumerable.Select;
-        SelectMethod = select.Method.GetGenericMethodDefinition();
-        Func<IEnumerable<object>, HashSet<object>> toHashSet = Enumerable.ToHashSet;
-        ToHashSetMethod = toHashSet.Method.GetGenericMethodDefinition();
-    }
+    
+    private static readonly MethodInfo SelectMethod 
+        = GetGenericMethod<Func<IEnumerable<object>, Func<object, object>, IEnumerable<object>>>(Enumerable.Select);
+    private static readonly MethodInfo ToArrayMethod = GetGenericMethod(Enumerable.ToArray<object>);
+    private static readonly MethodInfo ToListMethod = GetGenericMethod(Enumerable.ToList<object>);
+    private static readonly MethodInfo ToHashSetMethod = GetGenericMethod<Func<IEnumerable<object>, HashSet<object>>>(Enumerable.ToHashSet);
 
     /// <summary>
     /// Creates a lambda expression that projects the selected properties on the type itself.
