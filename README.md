@@ -54,23 +54,21 @@ class Service(QueryService queryService)
 ## Reusing expression segments in other expressions
 
 One challenge when working with Entity Framework and LINQ expressions is reusing logic that needs to be consistent
-across many queries. Entity Framework Core largely is not able to translate queries that include function calls in them.
+across many queries. Entity Framework Core largely is not able to translate queries that include function calls
+(that aren't sufficiently parametrized) in them.
+
 On top of that, expressions representing functions cannot be called inside an expression.
 LinqCompose aims to provide a means to achieve by means of a substitution expressions:
 
 ```csharp
+using static LinqCompose.Composer;
 Expression<Func<int, bool>> reusableExpression = x => x > 10;
-var substitutedExpression = ExpressionContext.With(r)
-    .SubstituteIn<SomeObject, bool>(r => b => r(b.NumericValue));
+var substitutedExpression = Compose<SomeObject, bool>(obj => Inline(reusableExpression)(obj.NumericValue));
 // substituedExpression will be equivalent to the expression : b => b.NumericValue > 10
 ```
 
-The above example is the most flexible version of this API, since it allows inserting arbritrary expressions
-into an expression. It does however require that the type parameters for the resulting function expression be explicitly
-provided, as they cannot be inferred by C#.
-
-For improved convenience, substituting versions of common IQueryable methods are provided as extension methods.
-```csharp
-queryAble.SWhere(x => x > 10, r => a => r(a.Value));
-```
-Here types can be fully inferred.
+The `Compose` function generally requires explicit type parameters, as inference is insufficient here.
+There are shorthand definitions for 1-3 parameter functions, but beyond this the full delegate type must be specified.
+E.g.:
+- Non-shorthand version: `Compose<Func<A,B,C,D,ReturnType>>((a,b,c,d) => ...)`.
+- 2-parameter shorthand:  `Compose<A,B,ReturnType>((a, b) => ...)`
