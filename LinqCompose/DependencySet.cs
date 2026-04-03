@@ -6,14 +6,13 @@ using LinqCompose.Visitors;
 
 namespace LinqCompose;
 
-[Obsolete("Use the typed DependencySet or DependencySet<T> instead.")]
-public class DependencySetBuilder(bool validatePath = false)
+public class DependencySet(Type rootType, bool validatePath = false)
 {
     private readonly HashSet<PropertyDependency> _dependencies = [];
-
-    public DependencySetBuilder AddProperty(PropertyInfo propertyInfo)
+    
+    public DependencySet Add(PropertyInfo propertyInfo)
     {
-        return AddPropertyPath(propertyInfo);
+        return AddPath(propertyInfo);
     }
     
     /// <summary>
@@ -22,20 +21,20 @@ public class DependencySetBuilder(bool validatePath = false)
     /// must be a member of the previously given property.
     /// If <see cref="validatePath"/> is set to `true` then failing to uphold this will throw an error.
     /// </summary>
-    public DependencySetBuilder AddPropertyPath(params PropertyInfo[] properties)
+    public DependencySet AddPath(params PropertyInfo[] properties)
     {
         if (properties.Length == 0)
         {
             return this;
         }
 
-        Type? targetType = null;
+        var targetType = rootType;
 
         var deps = _dependencies;
         
         foreach (var property in properties)
         {
-            if (validatePath && targetType is not null)
+            if (validatePath)
             {
                 ValidateDependency(targetType, property);
             }
@@ -59,8 +58,13 @@ public class DependencySetBuilder(bool validatePath = false)
         return this;
     }
 
-    public DependencySetBuilder AddFromExpression<T, TR>(Expression<Func<T, TR>> expr)
+    public DependencySet Add<T, Tr>(Expression<Func<T, Tr>> expr)
     {
+        if (typeof(T) != rootType)
+        {
+            throw new InvalidOperationException($"The parameter `{expr.Parameters[0].Name}` must be of type {rootType.Name}.");
+        }
+        
         var tracker = new ProjectionTracker();
         var deps = tracker.GetProjectedProperties(expr);
         foreach (var dependency in deps)
@@ -91,8 +95,33 @@ public class DependencySetBuilder(bool validatePath = false)
     /// Get a reference to the dependency tree.
     /// </summary>
     [Pure]
-    public HashSet<PropertyDependency> Result()
+    public HashSet<PropertyDependency> ToHashSet()
     {
-        return _dependencies;
+        return _dependencies.ToHashSet();
+    }
+}
+
+public class DependencySet<T>(bool validatePath = true) : DependencySet(typeof(T), validatePath)
+{
+    private readonly HashSet<PropertyDependency> _dependencies = [];
+
+    public DependencySet<T> Add<Tr>(Expression<Func<T, Tr>> expr)
+    {
+        var tracker = new ProjectionTracker();
+        var deps = tracker.GetProjectedProperties(expr);
+        foreach (var dependency in deps)
+        {
+            if (_dependencies.TryGetValue(dependency, out var existing))
+            {
+                _dependencies.Remove(dependency);
+                _dependencies.Add(existing.Union(dependency));
+            }
+            else
+            {
+                _dependencies.Add(dependency);
+            }
+        }
+
+        return this;
     }
 }
