@@ -12,6 +12,23 @@ internal class ComposeVisitor : ExpressionVisitor
     private static readonly MethodInfo InlineLambdaInfo =
         GetGenericMethod<Func<Expression<object>, object>>(Composer.Inline);
 
+    public override Expression? Visit(Expression? node)
+    {
+        if (node is null)
+        {
+            return node;
+        }
+        
+        var result = base.Visit(node);
+        
+        if (result is ConstantExpression { Value: Inline(var inlineTarget) })
+        {
+            return inlineTarget;
+        }
+        
+        return result;
+    }
+    
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         var compositionMethod = node.Method.GetGenericMethodDefinition();
@@ -50,13 +67,15 @@ internal class ComposeVisitor : ExpressionVisitor
             var expressionToInline = UnwrapLambdaArgument(node.Arguments[0]);
             return Expression.Constant(new Inline(expressionToInline));
         }
-
+        
         return base.VisitMethodCall(node);
     }
 
     protected override Expression VisitInvocation(InvocationExpression node)
     {
-        var r = Visit(node.Expression);
+        // We explicitly use the base.Visit to ensure that the Inline target isn't automatically unwrapped.
+        // as this would prevent us from reducing it here.
+        var r = base.Visit(node.Expression);
         if (r is ConstantExpression { Value: Inline(var inlineTarget) })
         {
             return node.Arguments
@@ -69,7 +88,9 @@ internal class ComposeVisitor : ExpressionVisitor
 
         return base.VisitInvocation(node);
     }
-
+    
+    
+    
     private static LambdaExpression UnwrapLambdaArgument(Expression expression)
     {
         // Inline lambda expressions are simply just a Unary expression that can be unwrapped

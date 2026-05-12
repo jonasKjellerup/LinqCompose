@@ -98,7 +98,7 @@ public class ComposerTests
     }
 
     [Test]
-    public void Inline_ParameterReferenceInExpressio_Throws()
+    public void Inline_ParameterReferenceInExpression_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
         {
@@ -106,5 +106,31 @@ public class ComposerTests
                 v + Composer.Inline<double>(Expression.Constant(v, typeof(double))));
         });
     }
-    
+
+    [Test]
+    public void Inline_LocalVariable_UsedAsMethodArgument()
+    {
+        Expression<Func<double, bool>> pred = x => x > 0;
+        var composition = Composer.Compose<IEnumerable<double>, IEnumerable<double>>(
+            source => source.Where(Composer.Inline(pred)));
+
+        Assert.That(
+            composition.ToString(),
+            Is.EqualTo("source => source.Where(x => (x > 0))")
+        );
+    }
+
+    [Test]
+    public void Inline_LocalVariable_UsedAsNewArrayElement()
+    {
+        Expression<Func<double, double>> expr = x => x * 2;
+        var composition = Composer.Compose<Func<Func<double, double>[]>>(
+            () => new[] { Composer.Inline(expr) });
+
+        Assert.That(
+            composition.ToString(),
+            Is.EqualTo("() => new [] {x => (x * 2)}")
+        );
+    }
+
 }
