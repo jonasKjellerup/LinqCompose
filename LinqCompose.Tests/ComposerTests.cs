@@ -133,4 +133,19 @@ public class ComposerTests
         );
     }
 
+    [Test]
+    public void Compose_NonComposerMethod_DoesNothing()
+    {
+        var composition = Composer.Compose<Func<int, int>>(v => Increment(v));
+        
+        Assert.That(
+            composition.ToString(),
+            Is.EqualTo("v => value(LinqTools.Tests.ComposerTests).Increment(v)"));
+    }
+    
+    private int Increment(int i)
+    {
+        return i + 1;
+    }
+    
 }

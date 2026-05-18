@@ -31,7 +31,9 @@ internal class ComposeVisitor : ExpressionVisitor
     
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
-        var compositionMethod = node.Method.GetGenericMethodDefinition();
+        var compositionMethod = node.Method.IsConstructedGenericMethod 
+            ? node.Method.GetGenericMethodDefinition()
+            : node.Method;
 
         if (compositionMethod == InlineExprInfo)
         {
