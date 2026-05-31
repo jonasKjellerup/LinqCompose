@@ -11,7 +11,7 @@ internal class ReductionVisitor(ParameterExpression target, Expression replaceme
 {
     protected override Expression VisitLambda<T>(Expression<T> node)
     {
-        if (node.Parameters.All(n => n.Name != target.Name))
+        if (node.Parameters.All(n => n != target))
         {
             return base.VisitLambda(node);
         }
@@ -25,13 +25,13 @@ internal class ReductionVisitor(ParameterExpression target, Expression replaceme
             Visit(node.Body),
             node.Name,
             node.TailCall,
-            node.Parameters.Where(n => n.Name != target.Name));
+            node.Parameters.Where(n => n != target));
     }
 
     protected override Expression VisitInvocation(InvocationExpression node)
     {
         if (replacement is not LambdaExpression replacementLambda 
-            || node.Expression is not ParameterExpression parameter || parameter.Name != target.Name)
+            || node.Expression is not ParameterExpression parameter || parameter != target)
         {
             return base.VisitInvocation(node);
         }
@@ -46,7 +46,7 @@ internal class ReductionVisitor(ParameterExpression target, Expression replaceme
 
     protected override Expression VisitParameter(ParameterExpression node)
     {
-        return node.Name == target.Name 
+        return node == target 
             ? replacement 
             : base.VisitParameter(node);
     }

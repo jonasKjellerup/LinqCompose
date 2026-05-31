@@ -18,14 +18,14 @@ internal class ComposeVisitor : ExpressionVisitor
         {
             return node;
         }
-        
+
         var result = base.Visit(node);
-        
+
         if (result is ConstantExpression { Value: Inline(var inlineTarget) })
         {
             return inlineTarget;
         }
-        
+
         return result;
     }
     
@@ -75,17 +75,19 @@ internal class ComposeVisitor : ExpressionVisitor
 
     protected override Expression VisitInvocation(InvocationExpression node)
     {
-        // We explicitly use the base.Visit to ensure that the Inline target isn't automatically unwrapped.
-        // as this would prevent us from reducing it here.
-        var r = base.Visit(node.Expression);
-        if (r is ConstantExpression { Value: Inline(var inlineTarget) })
+        var r = Visit(node.Expression);
+        if (r is LambdaExpression inlineTarget)
         {
-            return node.Arguments
+            var result = node.Arguments
                 .Zip(inlineTarget.Parameters)
                 .Aggregate(
-                    (Expression)inlineTarget,
-                    (lambda, pair) => new ReductionVisitor(pair.Second, pair.First).Visit(lambda)
+                    (Expression)inlineTarget.Body,
+                    (body, pair) => new ReductionVisitor(pair.Second, pair.First).Visit(body)
                 );
+            
+            // We need to visit the result again in case it contains more Inlines 
+            // that were inside the inlined lambda.
+            return Visit(result);
         }
 
         return base.VisitInvocation(node);
@@ -95,12 +97,16 @@ internal class ComposeVisitor : ExpressionVisitor
     
     private static LambdaExpression UnwrapLambdaArgument(Expression expression)
     {
-        // Inline lambda expressions are simply just a Unary expression that can be unwrapped
-        // If it has been explicitly cast to an expression, then it will be wrapped in multiple,
-        // unary expression, hence the use of ReduceUnary.
-        if (expression is UnaryExpression unary)
+        // If it's a lambda literal, it might be wrapped in a UnaryExpression (Convert or Quote)
+        var current = expression;
+        while (current is UnaryExpression unary)
         {
-            return (LambdaExpression)ReduceUnary(unary);
+            current = unary.Operand;
+        }
+
+        if (current is LambdaExpression lambda)
+        {
+            return lambda;
         }
 
         /*
@@ -109,34 +115,26 @@ internal class ComposeVisitor : ExpressionVisitor
         return ReadClosureExpression<LambdaExpression>(expression);
     }
 
-    private static Expression ReduceUnary(UnaryExpression unary)
-    {
-        do
-        {
-            var inner = unary.Operand;
-            if (inner is not UnaryExpression un)
-            {
-                return inner;
-            }
-
-            unary = un;
-        } while (true);
-    }
-
     private static T ReadClosureExpression<T>(Expression expression)
     {
+        // If the expression is already a ConstantExpression of the right type, just return it.
+        if (expression is ConstantExpression { Value: T value })
+        {
+            return value;
+        }
+
         /*
          * The syntax node is expected to look like this: (closureObj).localVarName
          * The closure is passed as a constant, so we can read fields on it and extract the lambda expression.
          */
-        Debug.Assert(expression is MemberExpression);
-        var memberExpression = (MemberExpression)expression;
-
-        Debug.Assert(memberExpression.Expression is ConstantExpression);
-        var constant = (ConstantExpression)memberExpression.Expression;
-
-        Debug.Assert(memberExpression.Member is FieldInfo);
-        return (T)((FieldInfo)memberExpression.Member).GetValue(constant.Value)!;
+        if (expression is MemberExpression { Expression: ConstantExpression constant, Member: FieldInfo field })
+        {
+            return (T)field.GetValue(constant.Value)!;
+        }
+        
+        // Fallback: try to compile and execute the expression if it's not a simple closure access.
+        var lambda = Expression.Lambda<Func<T>>(expression);
+        return lambda.Compile()();
     }
 
     private record Inline(LambdaExpression Expr);

@@ -57,4 +57,22 @@ public class ReductionTests
         });
     }
     
+    [Test]
+    public void ShadowedNames()
+    {
+        // Two different parameters with the same name
+        var param1 = Expression.Parameter(typeof(int), "x");
+        var param2 = Expression.Parameter(typeof(int), "x");
+
+        var lambda = Expression.Lambda<Func<int, int>>(
+            Expression.Add(param1, param2),
+            param1
+        );
+        
+        var visitor = new ReductionVisitor(param1, Expression.Constant(10));
+        var result = visitor.Visit(lambda.Body);
+        
+        Assert.That(result.ToString(), Is.EqualTo("(10 + x)"));
+    }
+    
 }

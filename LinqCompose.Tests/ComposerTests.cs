@@ -148,4 +148,32 @@ public class ComposerTests
         return i + 1;
     }
     
+    [Test]
+    public void Inline_Nested()
+    {
+        Expression<Func<int, int>> inner = x => x + 1;
+        Expression<Func<int, int>> composed = Composer.Compose((int x) => Composer.Inline(inner)(Composer.Inline(inner)(x)));
+        
+        var compiled = composed.Compile();
+        Assert.That(compiled(5), Is.EqualTo(7));
+    }
+    
+    private static Expression<Func<int, int>> ExpressionProperty { get; } = x => x + 2;
+    [Test]
+    public void Inline_StaticProperty()
+    {
+        var expr = Composer.Compose((int x) => Composer.Inline(ExpressionProperty)(x));
+        var compiled = expr.Compile();
+        Assert.That(compiled(5), Is.EqualTo(7));
+    }
+    
+    private static readonly Expression<Func<int, int>> ExpressionField = x => x + 2;
+    [Test]
+    public void Inline_StaticField()
+    {
+        var expr = Composer.Compose((int x) => Composer.Inline(ExpressionField)(x));
+        var compiled = expr.Compile();
+        Assert.That(compiled(5), Is.EqualTo(7));
+    }
+    
 }
